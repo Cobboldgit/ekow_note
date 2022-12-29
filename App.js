@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
   FlatList,
   Image,
@@ -9,34 +9,40 @@ import {
   View,
   Modal,
   TextInput,
+  ScrollView,
 } from "react-native";
+import FilesCard from "./componets/FilesCard";
+import ListCard from "./componets/ListCard";
 
 export const apiLink = "https://api.pwdevtest.com/records";
 
 export const uuid = (keyLength) => {
-  var chars =
-    '0123456789abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  var key = '';
+  var chars = "0123456789abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  var key = "";
   for (var i = 0; i <= keyLength; i++) {
     var randomNumber = Math.floor(Math.random() * chars.length);
     key += chars.substring(randomNumber, randomNumber + 1);
   }
 
   return key;
-}
+};
 
 export default function App() {
   const [notes, setNotes] = useState([]);
-  const [currentDisplay, setCurrentDisplay] = useState("archive");
+  const [currentDisplay, setCurrentDisplay] = useState("notes");
+  const [files, setFiles] = useState([]);
+  const [showFiles, setShowFiles] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [showNoteDetailsModal, setShowNoteDetailsModal] = useState(false);
   const [title, setTitle] = useState("Name/Title");
   const [description, setDescription] = useState("Description here");
+  const [selectedNote, setSelectedNote] = useState(null);
 
   const handleSwitchDisplay = () => {
-    if (currentDisplay === "archive") {
-      setCurrentDisplay("notes");
-    } else {
+    if (currentDisplay === "notes") {
       setCurrentDisplay("archive");
+    } else {
+      setCurrentDisplay("notes");
     }
   };
 
@@ -51,7 +57,6 @@ export default function App() {
       })
       .then((result) => {
         setNotes(result);
-        console.log(result);
       });
   };
 
@@ -85,9 +90,156 @@ export default function App() {
       })
       .then((result) => {
         console.log(result);
+        alert("Note Saved");
+        setModalVisible(!modalVisible);
       });
   };
 
+  // note pressed
+  const handleNotePressed = (note) => {
+    // get pressed note data and set to this state
+    setSelectedNote(note);
+    setShowNoteDetailsModal(!showNoteDetailsModal);
+  };
+
+  // view files pressed
+
+  const handleViewFilesPressed = (id) => {
+    setShowFiles(!showFiles);
+
+    fetch(apiLink + `/${2}/files`)
+      .then((response) => {
+        return response.json();
+      })
+      .then((result) => {
+        setFiles(result);
+        console.log(result);
+      });
+  };
+
+  // =================================================================================
+  // =================================================================================
+  // =================================================================================
+  // ===========================Modals ===============================================
+  // =================================================================================
+  // =================================================================================
+  // =================================================================================
+  // =================================================================================
+
+  //  note details modal
+
+  const renderShowNoteDetailsModal = () => {
+    return (
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showNoteDetailsModal}
+        statusBarTranslucent
+        onRequestClose={() => {
+          setShowNoteDetailsModal(!showNoteDetailsModal);
+        }}
+        style={{
+          flex: 1,
+        }}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: `rgba(0,0,0,0.3)`,
+            paddingHorizontal: 16,
+          }}
+        >
+          <View
+            style={{
+              width: "100%",
+              flexDirection: "column",
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: "#d9d9d9",
+                borderRadius: 20,
+                padding: 30,
+              }}
+            >
+              {showFiles === false ? (
+                <Fragment>
+                  <TouchableOpacity
+                    onPress={() => handleViewFilesPressed(selectedNote?.id)}
+                  >
+                    <Text
+                      style={{
+                        color: "blue",
+                        textDecorationLine: "underline",
+                        fontSize: 18,
+                      }}
+                    >
+                      View files
+                    </Text>
+                  </TouchableOpacity>
+                  <Text
+                    style={{
+                      fontSize: 30,
+                      fontWeight: "700",
+                      paddingVertical: 20,
+                    }}
+                  >
+                    {selectedNote?.name}
+                  </Text>
+                  <ScrollView>
+                    <Text
+                      style={{
+                        fontSize: 18,
+                      }}
+                    >
+                      {selectedNote?.description}
+                    </Text>
+                  </ScrollView>
+                </Fragment>
+              ) : (
+                <ScrollView>
+                  <TouchableOpacity onPress={() => setShowFiles(!showFiles)}>
+                    <Text
+                      style={{
+                        color: "blue",
+                        textDecorationLine: "underline",
+                        fontSize: 18,
+                      }}
+                    >
+                      go back
+                    </Text>
+                  </TouchableOpacity>
+                  {files.map((item, index) => {
+                    return <FilesCard item={item} />;
+                  })}
+                </ScrollView>
+              )}
+            </View>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginTop: 20,
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => {
+                  setShowNoteDetailsModal(!showNoteDetailsModal);
+                }}
+              >
+                <Image source={require("./assets/components/Group_3-2.png")} />
+              </TouchableOpacity>
+              <View></View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+  // add note modal
   const renderModal = () => {
     return (
       <Modal
@@ -125,6 +277,7 @@ export default function App() {
               }}
             >
               <TextInput
+                multiline={true}
                 style={{
                   fontSize: 30,
                   fontWeight: "700",
@@ -135,6 +288,7 @@ export default function App() {
                 onChangeText={(text) => setTitle(text)}
               />
               <TextInput
+                multiline={true}
                 style={{
                   fontSize: 18,
                 }}
@@ -167,10 +321,22 @@ export default function App() {
     );
   };
 
+  // =================================================================================
+  // =================================================================================
+  // =================================================================================
+  // ===========================Modals end ===========================================
+  // =================================================================================
+  // =================================================================================
+  // =================================================================================
+  // =================================================================================
+
   return (
     <View style={styles.container}>
       <StatusBar style="auto" />
+
+      {renderShowNoteDetailsModal()}
       {renderModal()}
+
       <TouchableOpacity onPress={handleSwitchDisplay}>
         {currentDisplay === "archive" ? (
           <Image source={require("./assets/components/Group_3.png")} />
@@ -188,61 +354,19 @@ export default function App() {
         renderItem={({ item }) => {
           if (currentDisplay === "archive" && item.archived === true) {
             return (
-              <View
-                style={{
-                  backgroundColor: "#e8e8e8",
-                  borderRadius: 20,
-                  marginVertical: 10,
-                  paddingHorizontal: 40,
-                  paddingVertical: 10,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 25,
-                    color: "black",
-                  }}
-                >
-                  {item.name}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 16,
-                    color: "black",
-                  }}
-                >
-                  {item.description}
-                </Text>
-              </View>
+              <ListCard
+                name={item.name}
+                description={item.description}
+                onPress={() => handleNotePressed(item)}
+              />
             );
           } else if (currentDisplay === "notes" && item.archived === false) {
             return (
-              <View
-                style={{
-                  backgroundColor: "#e8e8e8",
-                  borderRadius: 20,
-                  marginVertical: 10,
-                  paddingHorizontal: 40,
-                  paddingVertical: 10,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 25,
-                    color: "black",
-                  }}
-                >
-                  {item.name}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 16,
-                    color: "black",
-                  }}
-                >
-                  {item.description}
-                </Text>
-              </View>
+              <ListCard
+                name={item.name}
+                description={item.description}
+                onPress={() => handleNotePressed(item)}
+              />
             );
           }
         }}
