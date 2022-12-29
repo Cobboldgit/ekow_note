@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import FilesCard from "./componets/FilesCard";
 import ListCard from "./componets/ListCard";
+import { WebView } from "react-native-webview";
 
 export const apiLink = "https://api.pwdevtest.com/records";
 
@@ -34,9 +35,11 @@ export default function App() {
   const [showFiles, setShowFiles] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [showNoteDetailsModal, setShowNoteDetailsModal] = useState(false);
+  const [showWebViewerModal, setShowWebviewerModal] = useState(false);
   const [title, setTitle] = useState("Name/Title");
   const [description, setDescription] = useState("Description here");
   const [selectedNote, setSelectedNote] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const handleSwitchDisplay = () => {
     if (currentDisplay === "notes") {
@@ -103,11 +106,10 @@ export default function App() {
   };
 
   // view files pressed
-
   const handleViewFilesPressed = (id) => {
     setShowFiles(!showFiles);
 
-    fetch(apiLink + `/${id}/files`)
+    fetch(apiLink + `/${2}/files`)
       .then((response) => {
         return response.json();
       })
@@ -115,6 +117,13 @@ export default function App() {
         setFiles(result);
         console.log(result);
       });
+  };
+
+  const handleOpenFile = (url) => {
+    setSelectedFile(url);
+    setShowNoteDetailsModal(false);
+    setShowFiles(false);
+    setShowWebviewerModal(!showWebViewerModal);
   };
 
   // =================================================================================
@@ -213,7 +222,13 @@ export default function App() {
                   </TouchableOpacity>
                   {files.length > 0 ? (
                     files.map((item, index) => {
-                      return <FilesCard key={index} item={item} />;
+                      return (
+                        <FilesCard
+                          onPress={() => handleOpenFile(item.location)}
+                          key={index}
+                          item={item}
+                        />
+                      );
                     })
                   ) : (
                     <Text>Please wait...</Text>
@@ -231,6 +246,79 @@ export default function App() {
               <TouchableOpacity
                 onPress={() => {
                   setShowNoteDetailsModal(!showNoteDetailsModal);
+                  setShowFiles(!showFiles);
+                }}
+              >
+                <Image source={require("./assets/components/Group_3-2.png")} />
+              </TouchableOpacity>
+              <View></View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+  // add note modal
+  const renderWebviewerModal = () => {
+    return (
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showWebViewerModal}
+        statusBarTranslucent
+        onRequestClose={() => {
+          setShowWebviewerModal(!showWebViewerModal);
+        }}
+        style={{
+          flex: 1,
+        }}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: `rgba(0,0,0,0.3)`,
+            paddingHorizontal: 16,
+            paddingTop: 30,
+            paddingBottom: 30,
+          }}
+        >
+          <View
+            style={{
+              width: "100%",
+              flexDirection: "column",
+              flex: 1,
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: "#fff",
+                borderRadius: 20,
+                padding: 30,
+                flex: 1,
+              }}
+            >
+              <WebView
+                source={{
+                  uri: selectedFile,
+                }}
+                style={{
+                  flex: 1,
+                }}
+              />
+            </View>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginTop: 20,
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => {
+                  setShowWebviewerModal(!showWebViewerModal);
                 }}
               >
                 <Image source={require("./assets/components/Group_3-2.png")} />
@@ -339,6 +427,7 @@ export default function App() {
       <StatusBar style="auto" />
 
       {renderShowNoteDetailsModal()}
+      {renderWebviewerModal()}
       {renderModal()}
 
       <TouchableOpacity onPress={handleSwitchDisplay}>
