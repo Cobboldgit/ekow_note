@@ -213,7 +213,7 @@ export default function App() {
                   </TouchableOpacity>
                   {files.length > 0 ? (
                     files.map((item, index) => {
-                      return <FilesCard item={item} />;
+                      return <FilesCard key={index} item={item} />;
                     })
                   ) : (
                     <Text>Please wait...</Text>
