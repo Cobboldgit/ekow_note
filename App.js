@@ -107,7 +107,7 @@ export default function App() {
   const handleViewFilesPressed = (id) => {
     setShowFiles(!showFiles);
 
-    fetch(apiLink + `/${2}/files`)
+    fetch(apiLink + `/${id}/files`)
       .then((response) => {
         return response.json();
       })
@@ -211,9 +211,13 @@ export default function App() {
                       go back
                     </Text>
                   </TouchableOpacity>
-                  {files.map((item, index) => {
-                    return <FilesCard item={item} />;
-                  })}
+                  {files.length > 0 ? (
+                    files.map((item, index) => {
+                      return <FilesCard item={item} />;
+                    })
+                  ) : (
+                    <Text>Please wait...</Text>
+                  )}
                 </ScrollView>
               )}
             </View>
